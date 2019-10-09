@@ -78,26 +78,34 @@ function ngCreate() {
   $sass = New-Object system.Windows.Forms.CheckBox
   $sass.text = "Sass"
   $sass.AutoSize = $false
-  $sass.width = 62
+  $sass.width = 60
   $sass.height = 20
   $sass.location = New-Object System.Drawing.Point(25, 22)
   $sass.Font = 'Microsoft Sans Serif,10'
-
-  $routing = New-Object system.Windows.Forms.CheckBox
-  $routing.text = "Generate routing module"
-  $routing.AutoSize = $false
-  $routing.width = 177
-  $routing.height = 20
-  $routing.location = New-Object System.Drawing.Point(188, 22)
-  $routing.Font = 'Microsoft Sans Serif,10'
 
   $tests = New-Object system.Windows.Forms.CheckBox
   $tests.text = "Skip tests"
   $tests.AutoSize = $false
   $tests.width = 85
   $tests.height = 20
-  $tests.location = New-Object System.Drawing.Point(95, 22)
+  $tests.location = New-Object System.Drawing.Point(90, 22)
   $tests.Font = 'Microsoft Sans Serif,10'
+
+  $routing = New-Object system.Windows.Forms.CheckBox
+  $routing.text = "Generate routing module"
+  $routing.AutoSize = $false
+  $routing.width = 180
+  $routing.height = 20
+  $routing.location = New-Object System.Drawing.Point(185, 22)
+  $routing.Font = 'Microsoft Sans Serif,10'
+
+  $enableIvy = New-Object system.Windows.Forms.CheckBox
+  $enableIvy.text = "Enable ivy"
+  $enableIvy.AutoSize = $false
+  $enableIvy.width = 90
+  $enableIvy.height = 20
+  $enableIvy.location = New-Object System.Drawing.Point(375, 22)
+  $enableIvy.Font = 'Microsoft Sans Serif,10'
 
   $vscode = New-Object system.Windows.Forms.CheckBox
   $vscode.text = "Open in VS Code after creation"
@@ -222,7 +230,7 @@ function ngCreate() {
   $code.Font = 'Arial,7'
   $code.ForeColor = "#81ff00"
 
-  $flags.controls.AddRange(@($sass, $routing, $tests))
+  $flags.controls.AddRange(@($sass, $routing, $tests, $enableIvy))
   $server.controls.AddRange(@($npm, $ng, $serve, $changeDir, $code))
   $dependencies.controls.AddRange(@($cdk, $material, $flexLayout, $hammerjs, $momentjs))
   $Form.controls.AddRange(@($flags, $server, $dependencies, $Title, $Label1, $OKButton, $CancelButton, $vscode, $browser, $liveServer, $projectName))
@@ -246,7 +254,7 @@ function ngCreate() {
       } elseif ($_.KeyCode -eq "Escape") {
         $CancelButton.PerformClick()
       }
-    })
+  })
   $OKButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
   $CancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
 
@@ -304,10 +312,12 @@ function ngCreate() {
       break
     }
   }
+
   function displayForm {
     [void]$Form.Add_Shown( { $Form.Activate() })
     return $Form.ShowDialog()
   }
+
   function getAngularProjectsFolder {
     $path = getParamFormConfigFile -file $configParams['ConfigFile'] -param 'Path'
     if (!$path) {
@@ -319,6 +329,7 @@ function ngCreate() {
     }
     return $path
   }
+
   function actions ($Result) {
     if ($Result -eq [System.Windows.Forms.DialogResult]::OK) {
       if ($($projectName.text.Trim())) {
@@ -333,7 +344,7 @@ function ngCreate() {
         $cd = @{text = "cd $($configParams['ProjectsFolder'])"}
         $cmds = @()
         $cmdFields = @($cd, $labels)
-        $cmdFields.ForEach( {
+        $cmdFields.ForEach({
             if ($_.text) {
               $cmds += $_
             }
@@ -344,10 +355,12 @@ function ngCreate() {
       Write-Host "Operation Canceled."
     }
   }
+
   function initialisation {
     $sass.Checked = $true
     $tests.Checked = $true
     $routing.Checked = $true
+    $enableIvy.Checked = $true
     $vscode.checked = $true
     $liveServer.checked = $true
     if ($projectName.CanFocus) {
@@ -360,8 +373,9 @@ function ngCreate() {
     projectNameGlobalActivation
   }
   function updateProjectNameFieldValue {
-    if ($ProjectInitName -and $($ProjectInitName.Trim())) {        
-      $projectName.text = $ProjectInitName.Trim()
+    $ProjectInitNameTrimmed = $ProjectInitName.Trim()
+    if ($ProjectInitName -and $($ProjectInitNameTrimmed)) {        
+      $projectName.text = $ProjectInitNameTrimmed
     }  
   }
   function updateBrowserState {
@@ -404,7 +418,10 @@ function ngCreate() {
         }
         if ($routing.Checked) {
           $options += " --routing"
-        } 
+        }
+        if ($enableIvy.Checked) {
+          $options += " --enable-ivy"
+        }
         $ng.Text = "ng new $($projectName.Text) $options"
         $changeDir.text = "cd $($projectName.text)"
         break
@@ -443,10 +460,8 @@ function ngCreate() {
     }
   }
   #endregion FUNCTIONS
-
   initialisation
-  actions(displayForm)
-  
+  actions(displayForm)  
 }
 
 
